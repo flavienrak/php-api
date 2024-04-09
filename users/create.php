@@ -19,10 +19,12 @@ switch ($method) {
   case 'POST':
     $userPost = json_decode(file_get_contents('php://input'));
 
-    $name = $userPost->name;
-    $username = $userPost->username;
+    $nom = $userPost->nom;
+    $prenom = $userPost->prenom;
+    $userPassword = $userPost->userPassword;
     $email = $userPost->email;
 
+    $password = password_hash($userPassword, PASSWORD_DEFAULT);
     $result = mysqli_query($db_conn, "INSERT INTO user (name, username, email) VALUES('$name', '$username', '$email')");
 
     if ($result) {

@@ -20,18 +20,22 @@ switch ($method) {
     $path = explode('/', $_SERVER['REQUEST_URI']);
 
     if (isset($path[4]) && is_numeric($path[4])) {
-      $json_array = array();
-      $id = $path[4];
-      $getUserRow  = mysqli_query($db_conn, "SELECT * FROM user WHERE id='$id'");
+      $id = (int) $path[4];
+      $getUserRow = mysqli_query($db_conn, "SELECT * FROM users WHERE id='$id'");
 
-      while ($user = mysqli_fetch_array($getUserRow)) {
-        $json_array['user'] = array('id' => $user['id'], 'name' => $user['name'], 'username' => $user['username'], 'email' => $user['email'],);
+      if ($user = mysqli_fetch_assoc($getUserRow)) {
+        echo json_encode($user);
+        return;
+      } else {
+        http_response_code(404);
+        echo json_encode(['userNotFound' => true]);
+        return;
       }
-      echo json_encode($json_array['user']);
-
+    } else {
+      http_response_code(400);
+      echo json_encode(['invalidID' => true]);
       return;
-    };
-    break;
+    }
 
   case 'PUT':
     $values = json_decode(file_get_contents('php://input'));

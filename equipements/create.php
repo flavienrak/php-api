@@ -19,6 +19,8 @@ switch ($method) {
   case 'POST':
     $userPost = json_decode(file_get_contents('php://input'));
 
+    $userId = $userPost->userId;
+    $categorie = $userPost->categorie;
     $nom = $userPost->nom;
     $adresseIP = $userPost->adresseIP;
     $dateInstallation = $userPost->dateInstallation;
@@ -26,6 +28,11 @@ switch ($method) {
     $sysExploitation = $userPost->sysExploitation;
     $capRAM = $userPost->capRAM;
     $capStockage = $userPost->capStockage;
+    $passerelle = $userPost->passerelle;
+    $protocoleRoutage = $userPost->protocoleRoutage;
+    $nbPorts = $userPost->nbPorts;
+    $typePorts = $userPost->typePorts;
+    $qualiteService = $userPost->qualiteService;
     $debit = $userPost->debit;
     $tempsConnexion = $userPost->tempsConnexion;
     $tempsReponse = $userPost->tempsReponse;
@@ -36,20 +43,30 @@ switch ($method) {
 
     $result = mysqli_query(
       $db_conn,
-      "INSERT INTO equipements (nom, adresseIP, dateInstallation, description, sysExploitation, capRAM, capStockage, debit, tempsConnexion, tempsReponse, tauxErreur, createdAt, updatedAt) VALUES('$nom', '$adresseIP', '$dateInstallation', '$description', '$sysExploitation', '$capRAM', '$capStockage', '$debit', '$tempsConnexion', '$tempsReponse', '$tauxErreur', '$createdAt', '$updatedAt')"
+      "INSERT INTO equipements (userId, categorie, nom, adresseIP, dateInstallation, description, sysExploitation, capRAM, capStockage, passerelle, protocoleRoutage, nbPorts, typePorts, qualiteService, debit, tempsConnexion, tempsReponse, tauxErreur, createdAt, updatedAt) VALUES('$userId', '$categorie', '$nom', '$adresseIP', '$dateInstallation', '$description', '$sysExploitation', '$capRAM', '$capStockage', '$passerelle', '$protocoleRoutage', '$nbPorts', '$typePorts', '$qualiteService', '$debit', '$tempsConnexion', '$tempsReponse', '$tauxErreur', '$createdAt', '$updatedAt')"
     );
+
+    $allTypes = ["debit", "tauxErreur", "tempsReponse", "tempsConnexion"];
+
 
     if ($result) {
       $equipement_id = mysqli_insert_id($db_conn);
 
-      $select_query = "SELECT * FROM equipements WHERE id = $equipement_id";
+
+      $select_query = "SELECT * FROM equipements WHERE id='$equipement_id'";
       $select_result = mysqli_query($db_conn, $select_query);
 
       if ($select_result && mysqli_num_rows($select_result) > 0) {
         $equipement_data = mysqli_fetch_assoc($select_result);
-        $equipement_json = json_encode($equipement_data);
 
-        echo $equipement_json;
+        foreach ($allTypes as $type) {
+          mysqli_query($db_conn, "INSERT INTO data (equipementId, type, value, date) VALUES ('{$equipement_data['id']}', '$type', '$equipement_data[$type]', '{$equipement_data['createdAt']}')");
+        }
+
+        $select_query = "SELECT * FROM equipements WHERE id='$equipement_id'";
+        $select_result = mysqli_query($db_conn, $select_query);
+
+        echo $json_encode($equipement_data);
         return;
       } else {
         echo json_encode(["NotFound" => "Data not found"]);
